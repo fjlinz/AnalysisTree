@@ -98,7 +98,7 @@ void TaskManager::Run(long long nEvents) {
   }
 
   for (long long iEvent = 0; iEvent < nEvents; ++iEvent) {
-    std::printf(Form("Processing event: %i of %i",iEvent,nEvents));
+    std::printf(Form("\rProcessing event: %i of %i",iEvent,nEvents));
 
     if (verbosity_period_ > 0 && iEvent % verbosity_period_ == 0) {
       std::cout << "Event no " << iEvent << "\n";
