@@ -98,7 +98,7 @@ void TaskManager::Run(long long nEvents) {
   }
 
   for (long long iEvent = 0; iEvent < nEvents; ++iEvent) {
-    std::printf(Form("\rProcessing event: %i of %i",iEvent,nEvents));
+    std::printf(Form("\rProcessing events: %.0i",(iEvent+1)/nEvents));
 
     if (verbosity_period_ > 0 && iEvent % verbosity_period_ == 0) {
       std::cout << "Event no " << iEvent << "\n";
@@ -111,7 +111,7 @@ void TaskManager::Run(long long nEvents) {
 
   auto end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = end - start;
-  std::cout << "elapsed time: " << elapsed_seconds.count() << ", per event: " << elapsed_seconds.count() / nEvents << "s\n";
+  std::cout << "\nElapsed time: " << elapsed_seconds.count() << ", per event: " << elapsed_seconds.count() / nEvents << "s\n";
 }
 
 void TaskManager::Finish() {
