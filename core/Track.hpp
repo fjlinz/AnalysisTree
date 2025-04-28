@@ -150,6 +150,59 @@ class Track : public Container {
     }
   }
 
+  //##########################################################################################
+  // NEW PART
+  // Hit in bestimmtem Modul eines Detektors setzen
+  void SetHitInModule(const std::string& detector_name, size_t module_id, bool has_hit) {
+    auto field_id = GetFieldId(detector_name + "_hits");
+    auto& hits = GetField<std::vector<bool>>(field_id);
+    if (module_id >= hits.size()) {
+      hits.resize(module_id + 1, false); // Auf korrekte Länge erweitern
+    }
+    hits[module_id] = has_hit;
+  }
+
+  // Abfragen, ob ein bestimmtes Modul eines Detektors einen Hit hat
+  bool HasHitInModule(const std::string& detector_name, size_t module_id) const {
+    auto field_id = GetFieldId(detector_name + "_hits");
+    const auto& hits = GetField<std::vector<bool>>(field_id);
+    return hits.at(module_id);
+  }
+
+  // Anzahl der Hits in einem Detektor
+  size_t GetNumberOfHits(const std::string& detector_name) const {
+    auto field_id = GetFieldId(detector_name + "_hits");
+    const auto& hits = GetField<std::vector<bool>>(field_id);
+    return std::count(hits.begin(), hits.end(), true);
+  }
+
+  // Optional: Alle Hits über alle Detektoren aufsummieren
+  size_t GetTotalNumberOfHits() const {
+    size_t total_hits = 0;
+    for (const auto& field : GetFields()) {
+      if (field.GetType() == AnalysisTree::Types::VectorBool &&
+          field.GetName().size() >= 5 &&
+          field.GetName().substr(field.GetName().size() - 5) == "_hits") { // Name endet auf "_hits"
+        const auto& hits = GetField<std::vector<bool>>(field.GetId());
+        total_hits += std::count(hits.begin(), hits.end(), true);
+      }
+    }
+    return total_hits;
+  }
+
+  // Zugriff auf gesamten Hit-Vektor eines Detektors
+  const std::vector<bool>& GetHitsVector(const std::string& detector_name) const {
+    auto field_id = GetFieldId(detector_name + "_hits");
+    return GetField<std::vector<bool>>(field_id);
+  }
+
+  // Direkte Initialisierung (nur falls du kompletten Vektor neu setzen willst)
+  void SetHitsVector(const std::string& detector_name, const std::vector<bool>& hits_vector) {
+    auto field_id = GetFieldId(detector_name + "_hits");
+    GetField<std::vector<bool>>(field_id) = hits_vector;
+  }
+  //##########################################################################################
+
   /**
   * Prints the track content
   */
