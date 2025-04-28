@@ -71,6 +71,9 @@ Types BranchConfig::GetFieldType(const std::string& sField) const {
   id = VectorConfig<bool>::GetId(sField);
   if (id != UndefValueShort) return Types::kBool;
 
+  id = VectorConfig<vector<bool>>::GetId(sField);
+  if (id != UndefValueShort) return Types:kVectorBool;
+
   return (Types) UndefValueShort;
 }
 
@@ -82,6 +85,9 @@ ShortInt_t BranchConfig::GetFieldId(const std::string& sField) const {
   if (id != UndefValueShort) return id;
 
   id = VectorConfig<bool>::GetId(sField);
+  if (id != UndefValueShort) return id;
+
+  id = VectorConfig<vector<bool>>::GetId(sField);
   if (id != UndefValueShort) return id;
 
   return UndefValueShort;
@@ -104,6 +110,12 @@ BranchConfig BranchConfig::Clone(const std::string& name, DetType type) const {
       result.AddField<bool>(field.first, field.second.id_, field.second.title_);
     }
   }
+  for (const auto& field : AnalysisTree::VectorConfig<vector<bool>>::map_) {
+    if (field.second.id_ >= 0) {
+      result.AddField<vector<bool>>(field.first, field.second.id_, field.second.title_);
+    }
+  }
+  result.AnalysisTree::VectorConfig<vector<bool>>::size_ = AnalysisTree::VectorConfig<vector<bool>>::size_;
   result.AnalysisTree::VectorConfig<bool>::size_ = AnalysisTree::VectorConfig<bool>::size_;
   result.AnalysisTree::VectorConfig<int>::size_ = AnalysisTree::VectorConfig<int>::size_;
   result.AnalysisTree::VectorConfig<float>::size_ = AnalysisTree::VectorConfig<float>::size_;
@@ -126,6 +138,9 @@ BranchConfig BranchConfig::CloneAndMerge(const BranchConfig& attached) const {
   }
   for (const auto& field : attached.AnalysisTree::VectorConfig<bool>::map_) {
     result.AddField<bool>(name2 + "_" + field.first, name2 + ": " + field.second.title_);
+  }
+  for (const auto& field : attached.AnalysisTree::VectorConfig<vector<bool>>::map_) {
+    result.AddField<vector<bool>>(name2 + "_" + field.first, name2 + ": " + field.second.title_);
   }
 
   if (type1 != DetType::kEventHeader && attached.GetType() != DetType::kEventHeader) {
@@ -204,6 +219,7 @@ void BranchConfig::RemoveField(const std::string& name) {
   if (field_type == Types::kInteger) VectorConfig<int>::RemoveField(name, field_id);
   if (field_type == Types::kFloat) VectorConfig<float>::RemoveField(name, field_id);
   if (field_type == Types::kBool) VectorConfig<bool>::RemoveField(name, field_id);
+  if (field_type == Types::kVectorBool) VectorConfig<vector<bool>>::RemoveField(name, field_id);
 }
 
 void BranchConfig::GuaranteeFieldNameVacancy(const std::string& name) const {
@@ -222,6 +238,9 @@ void BranchConfig::Print() const {
   std::cout << "\nBoolean fields:" << boolean_fields_empty_message << std::endl
             << std::endl;
   VectorConfig<bool>::Print();
+  const std::string vectorBoolean_fields_empty_message = VectorConfig<vector<bool>>::map_.empty() ? " no vector<boolean> fields in this branch" : "";
+  std::cout << "\nVector<Boolean> Fields:" << vectorBoolean_fields_empty_message << std::endl;
+  VectorConfig<vector<bool>>::Print();
   //  std::cout << std::endl;
 }
 

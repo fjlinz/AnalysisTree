@@ -86,7 +86,7 @@ class VectorConfig {
 /**
  * Maybe better design choise would be use composition over inheritance (?)
  */
-class BranchConfig : public VectorConfig<int>, public VectorConfig<float>, public VectorConfig<bool> {
+class BranchConfig : public VectorConfig<int>, public VectorConfig<float>, public VectorConfig<bool>, public VectorConfig<vector<bool>> {
 
  public:
   BranchConfig() = default;
