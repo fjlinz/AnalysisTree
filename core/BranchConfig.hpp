@@ -164,6 +164,14 @@ class BranchConfig : public VectorConfig<int>, public VectorConfig<float>, publi
 
   bool HasField(const std::string& field) const { return GetFieldId(field) != UndefValueShort; }
 
+  // Hit map: flat boolian vector for hit stations over registered detectors
+  void AddDetectorToHitMap(const std::string& name, ShortInt_t n_stations, const std::string& title = "");
+  ANALYSISTREE_ATTR_NODISCARD ShortInt_t GetHitMapOffset(const std::string& det) const;
+  ANALYSISTREE_ATTR_NODISCARD ShortInt_t GetHitMapSize(const std::string& det) const;
+  ANALYSISTREE_ATTR_NODISCARD ShortInt_t GetTotalHitMapSize() const;
+  ANALYSISTREE_ATTR_NODISCARD bool HasHitMap(const std::string& det) const;
+  ANALYSISTREE_ATTR_NODISCARD const std::vector<std::string>& GetHitMapDetectors() const { return hit_map_names_; }
+
  protected:
   void GenerateId();
 
@@ -174,7 +182,10 @@ class BranchConfig : public VectorConfig<int>, public VectorConfig<float>, publi
   size_t id_{0};
   DetType type_{DetType(UndefValueShort)};
 
-  ClassDefOverride(BranchConfig, 4);
+  std::vector<std::string> hit_map_names_{};
+  std::vector<ShortInt_t>  hit_map_sizes_{};
+
+  ClassDefOverride(BranchConfig, 5);
 };
 
 // BranchConfig Merge(const BranchConfig& primary, const BranchConfig& secondary);

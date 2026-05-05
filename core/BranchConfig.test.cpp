@@ -41,6 +41,48 @@ TEST(BranchConfig, Basics) {
   EXPECT_EQ(branch_config.GetFieldId("pz"), TrackFields::kPz);
 }
 
+TEST(BranchConfig, HitMap) {
+  BranchConfig branch_config("RecTracks", DetType::kTrack);
+  branch_config.AddDetectorToHitMap("Det0",  4);
+  branch_config.AddDetectorToHitMap("Det1", 12);
+  branch_config.AddDetectorToHitMap("Det2",  1);
+
+  // Sum of all station should correspond to the hitmap size
+  EXPECT_EQ(branch_config.GetTotalHitMapSize(), 17);
+
+  // Check starting positions of detectors: Det0 starts at 0, Det1 at 4, Det2 at 16
+  EXPECT_EQ(branch_config.GetHitMapOffset("Det0"),  0);
+  EXPECT_EQ(branch_config.GetHitMapOffset("Det1"),  4);
+  EXPECT_EQ(branch_config.GetHitMapOffset("Det2"), 16);
+
+  // Correct number of stations for each detector
+  EXPECT_EQ(branch_config.GetHitMapSize("Det0"),  4);
+  EXPECT_EQ(branch_config.GetHitMapSize("Det1"), 12);
+  EXPECT_EQ(branch_config.GetHitMapSize("Det2"),  1);
+
+  EXPECT_TRUE(branch_config.HasHitMap("Det0"));
+  EXPECT_FALSE(branch_config.HasHitMap("Det3"));
+
+  // Each detector must be uniquely added
+  EXPECT_THROW(branch_config.AddDetectorToHitMap("Det0", 4), std::runtime_error);
+
+  // Proper ordering of detectors must be returned
+  const auto& dets = branch_config.GetHitMapDetectors();
+  ASSERT_EQ(dets.size(), 3u);
+  EXPECT_EQ(dets[0], "Det0");
+  EXPECT_EQ(dets[1], "Det1");
+  EXPECT_EQ(dets[2], "Det2");
+
+  // Return UndefValueShort if unknown detector
+  EXPECT_EQ(branch_config.GetHitMapOffset("UNKNOWN"), UndefValueShort);
+  EXPECT_EQ(branch_config.GetHitMapSize("UNKNOWN"),   UndefValueShort);
+
+  // Same hit map configuration unchanged for cloned object
+  auto cloned = branch_config.Clone("RecTracks2", DetType::kTrack);
+  EXPECT_EQ(cloned.GetTotalHitMapSize(), 17);
+  EXPECT_EQ(cloned.GetHitMapOffset("Det1"), 4);
+}
+
 }// namespace
 
 #endif//ANALYSISTREE_CORE_BRANCHCONFIG_TEST_H_

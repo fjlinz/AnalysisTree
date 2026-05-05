@@ -90,6 +90,51 @@ TEST(Track, Write) {
   f->Close();
 }
 
+TEST(Track, HitMap) {
+  BranchConfig branch_config("RecTracks", DetType::kTrack);
+  branch_config.AddDetectorToHitMap("Det0",  4);
+  branch_config.AddDetectorToHitMap("Det1", 12);
+  branch_config.AddDetectorToHitMap("Det2",  1);
+
+  const auto offset0 = branch_config.GetHitMapOffset("Det0");
+  const auto size0   = branch_config.GetHitMapSize("Det0");
+  const auto offset1 = branch_config.GetHitMapOffset("Det1");
+  const auto size1   = branch_config.GetHitMapSize("Det1");
+  const auto offset2 = branch_config.GetHitMapOffset("Det2");
+  const auto size2   = branch_config.GetHitMapSize("Det2");
+
+  Track track(0);
+
+  // SetDetectorHits to fill hit_map_
+  track.SetDetectorHits(offset0, size0, {1, 1, 1, 0});
+  track.SetDetectorHits(offset1, size1, {1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0});
+  track.SetDetectorHits(offset2, size2, {1});
+
+  EXPECT_EQ(static_cast<int>(track.GetHitMap().size()), branch_config.GetTotalHitMapSize());
+
+  // Count hits per detector
+  EXPECT_EQ(track.CountHits(offset0, size0), 3);
+  EXPECT_EQ(track.CountHits(offset1, size1), 6);
+  EXPECT_EQ(track.CountHits(offset2, size2), 1);
+  EXPECT_EQ(track.CountAllHits(), 10);
+
+  // Check detector entries
+  const auto det0_hits = track.GetDetectorHits(offset0, size0);
+  ASSERT_EQ(det0_hits.size(), 4u);
+  EXPECT_EQ(det0_hits[0], true);
+  EXPECT_EQ(det0_hits[3], false);
+
+  // SetHitMap replaces the entire hit vector
+  track.SetHitMap(std::vector<bool>(branch_config.GetTotalHitMapSize(), true));
+  EXPECT_EQ(track.CountAllHits(), branch_config.GetTotalHitMapSize());
+
+  // Check correct size in SetDetectorHits
+  EXPECT_THROW(track.SetDetectorHits(offset0, size0, {1, 0}), std::runtime_error);
+
+  // Check for correct access in GetDetectorHits
+  EXPECT_THROW(track.GetDetectorHits(100, 5), std::out_of_range);
+}
+
 }// namespace
 
 #endif//ANALYSISTREE_TEST_CORE_TRACK_TEST_HPP_

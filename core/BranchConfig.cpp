@@ -108,6 +108,9 @@ BranchConfig BranchConfig::Clone(const std::string& name, DetType type) const {
   result.AnalysisTree::VectorConfig<int>::size_ = AnalysisTree::VectorConfig<int>::size_;
   result.AnalysisTree::VectorConfig<float>::size_ = AnalysisTree::VectorConfig<float>::size_;
 
+  result.hit_map_names_ = hit_map_names_;
+  result.hit_map_sizes_ = hit_map_sizes_;
+
   return result;
 }
 
@@ -128,11 +131,55 @@ BranchConfig BranchConfig::CloneAndMerge(const BranchConfig& attached) const {
     result.AddField<bool>(name2 + "_" + field.first, name2 + ": " + field.second.title_);
   }
 
+  for (size_t i = 0; i < attached.hit_map_names_.size(); ++i) {
+    result.hit_map_names_.emplace_back(name2 + "_" + attached.hit_map_names_[i]);
+    result.hit_map_sizes_.emplace_back(attached.hit_map_sizes_[i]);
+  }
+
   if (type1 != DetType::kEventHeader && attached.GetType() != DetType::kEventHeader) {
     result.AddField<int>("matching_case", "0 - both present, 1 - only first present, 2 - only second present");
   }
 
   return result;
+}
+
+void BranchConfig::AddDetectorToHitMap(const std::string& name, ShortInt_t n_stations, const std::string& /*title*/) {
+  for (const auto& existing : hit_map_names_) {
+    if (existing == name) {
+      throw std::runtime_error("BranchConfig::AddDetectorToHitMap(): detector '" + name + "' already registered");
+    }
+  }
+  hit_map_names_.emplace_back(name);
+  hit_map_sizes_.emplace_back(n_stations);
+}
+
+ShortInt_t BranchConfig::GetHitMapOffset(const std::string& det) const {
+  ShortInt_t offset = 0;
+  for (size_t i = 0; i < hit_map_names_.size(); ++i) {
+    if (hit_map_names_[i] == det) return offset;
+    offset += hit_map_sizes_[i];
+  }
+  return UndefValueShort;
+}
+
+ShortInt_t BranchConfig::GetHitMapSize(const std::string& det) const {
+  for (size_t i = 0; i < hit_map_names_.size(); ++i) {
+    if (hit_map_names_[i] == det) return hit_map_sizes_[i];
+  }
+  return UndefValueShort;
+}
+
+ShortInt_t BranchConfig::GetTotalHitMapSize() const {
+  ShortInt_t total = 0;
+  for (auto s : hit_map_sizes_) total += s;
+  return total;
+}
+
+bool BranchConfig::HasHitMap(const std::string& det) const {
+  for (const auto& name : hit_map_names_) {
+    if (name == det) return true;
+  }
+  return false;
 }
 
 template<typename T>
@@ -222,7 +269,16 @@ void BranchConfig::Print() const {
   std::cout << "\nBoolean fields:" << boolean_fields_empty_message << std::endl
             << std::endl;
   VectorConfig<bool>::Print();
-  //  std::cout << std::endl;
+  if (!hit_map_names_.empty()) {
+    std::cout << "\nDetector hit map (" << GetTotalHitMapSize() << " stations total):" << std::endl;
+    ShortInt_t offset = 0;
+    for (size_t i = 0; i < hit_map_names_.size(); ++i) {
+      std::cout << "  offset=" << std::setw(4) << offset
+                << "  size=" << std::setw(3) << hit_map_sizes_[i]
+                << "  " << hit_map_names_[i] << std::endl;
+      offset += hit_map_sizes_[i];
+    }
+  }
 }
 
 void BranchConfig::PrintBranchId() const {
