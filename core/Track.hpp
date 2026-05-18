@@ -155,6 +155,16 @@ class Track : public Container {
   */
   void Print() const noexcept override;
 
+  // Hit map: flat bool vector covering all detectors in order.
+  // Use BranchConfig::GetHitMapOffset(det) and GetHitMapSize(det) to
+  // obtain the offset and size for a named detector, then pass them below.
+  void SetHitMap(const std::vector<bool>& hits);
+  ANALYSISTREE_ATTR_NODISCARD const std::vector<bool>& GetHitMap() const { return hit_map_; }
+  ANALYSISTREE_ATTR_NODISCARD int CountAllHits() const;
+  void SetDetectorHits(ShortInt_t offset, ShortInt_t size, const std::vector<bool>& hits);
+  ANALYSISTREE_ATTR_NODISCARD std::vector<bool> GetDetectorHits(ShortInt_t offset, ShortInt_t size) const;
+  ANALYSISTREE_ATTR_NODISCARD int CountHits(ShortInt_t offset, ShortInt_t size) const;
+
  protected:
   static float GetMassByPdgId(PdgCode_t pdg);
   static int GetChargeByPdgId(PdgCode_t pdg);
@@ -163,8 +173,9 @@ class Track : public Container {
   Floating_t py_{UndefValueFloat};///< y-component of track's momentum
   Floating_t pz_{UndefValueFloat};///< z-component of track's momentum
   Integer_t charge_{-1000};
+  std::vector<bool> hit_map_{};
 
-  ClassDefOverride(Track, 2);
+  ClassDefOverride(Track, 3);
 };
 
 }// namespace AnalysisTree
